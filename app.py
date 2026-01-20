@@ -1,60 +1,79 @@
 from flask import Flask, render_template, request, jsonify
+import joblib
+import pandas as pd
 import numpy as np
-import pickle
-import os
 
 app = Flask(__name__)
 
-# Path to model folder
-MODEL_PATH = os.path.join("model", "wine_cultivar_model.pkl")
-
-# Load model and scaler safely
+# Load the trained model and preprocessors
 try:
-    with open(MODEL_PATH, "rb") as file:
-        model, scaler = pickle.load(file)
-    print("✓ Model and scaler loaded successfully!")
-except FileNotFoundError:
-    print(f"❌ Model file not found at {MODEL_PATH}. Check your folder structure.")
-    model, scaler = None, None
+    model = joblib.load('titanic_survival_model.pkl')
+    scaler = joblib.load('scaler.pkl')
+    feature_names = joblib.load('feature_names.pkl')
+    print("✓ Model and preprocessors loaded successfully")
+except FileNotFoundError as e:
+    print(f"Error loading model files: {e}")
+    model = None
+    scaler = None
+    feature_names = None
 
-# Home page
-@app.route("/", methods=["GET"])
+@app.route('/')
 def home():
-    return render_template("index.html")
+    return render_template('index.html')
 
-# Predict endpoint
-@app.route("/predict", methods=["POST"])
+@app.route('/predict', methods=['POST'])
 def predict():
-    if model is None or scaler is None:
-        return jsonify({"error": "Model not loaded. Check server configuration."}), 500
-
     try:
-        # Read input from form
-        alcohol = float(request.form["alcohol"])
-        malic_acid = float(request.form["malic_acid"])
-        ash = float(request.form["ash"])
-        alcalinity = float(request.form["alcalinity"])
-        flavanoids = float(request.form["flavanoids"])
-        color_intensity = float(request.form["color_intensity"])
-
-        # Create features array
-        features = np.array([[alcohol, malic_acid, ash, alcalinity, flavanoids, color_intensity]])
-        features_scaled = scaler.transform(features)
-
-        # Predict
-        pred_class = model.predict(features_scaled)[0]
-        prediction = f"Cultivar {pred_class + 1}"  # +1 to match UCI dataset classes
-
-        return jsonify({"prediction": prediction})
-
+        if model is None or scaler is None:
+            return jsonify({
+                'error': 'Model not loaded. Please check server configuration.'
+            }), 500
+        
+        # Get data from form
+        pclass = int(request.form['pclass'])
+        sex = request.form['sex']
+        age = float(request.form['age'])
+        fare = float(request.form['fare'])
+        embarked = request.form['embarked']
+        
+        # Encode categorical variables
+        sex_encoded = 1 if sex.lower() == 'male' else 0
+        embarked_encoded = {'C': 0, 'Q': 1, 'S': 2}[embarked.upper()]
+        
+        # Create DataFrame
+        input_data = pd.DataFrame({
+            'Pclass': [pclass],
+            'Sex': [sex_encoded],
+            'Age': [age],
+            'Fare': [fare],
+            'Embarked': [embarked_encoded]
+        })
+        
+        # Scale the input
+        input_scaled = scaler.transform(input_data)
+        
+        # Make prediction
+        prediction = model.predict(input_scaled)[0]
+        probability = model.predict_proba(input_scaled)[0]
+        
+        result = {
+            'prediction': int(prediction),
+            'result': 'Survived' if prediction == 1 else 'Did Not Survive',
+            'survival_probability': float(probability[1]),
+            'death_probability': float(probability[0])
+        }
+        
+        return jsonify(result)
+    
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({'error': str(e)}), 400
 
-# Health check endpoint
-@app.route("/health", methods=["GET"])
+@app.route('/health')
 def health():
-    return jsonify({"status": "healthy", "model_loaded": model is not None})
+    return jsonify({
+        'status': 'healthy',
+        'model_loaded': model is not None
+    })
 
-# Run server
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
