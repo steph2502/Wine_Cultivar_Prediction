@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wine Cultivator Origin Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 650px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #8e2de2;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 20px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        #result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        #result.show {
+            display: block;
+        }
+        .prediction {
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #4a00e0;
+        }
+        .confidence {
+            font-size: 18px;
+            margin-top: 10px;
+            color: #666;
+        }
+        .probabilities {
+            margin-top: 15px;
+            text-align: left;
+        }
+        .prob-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        .prob-label {
+            width: 120px;
+            font-weight: 600;
+            color: #555;
+        }
+        .prob-bar {
+            flex: 1;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+        .prob-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+            transition: width 0.5s ease;
+        }
+        .prob-value {
+            width: 50px;
+            text-align: right;
+            font-weight: 600;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍷 Wine Cultivator Origin Prediction</h1>
+        <p class="subtitle">Enter wine chemical analysis data</p>
+        <form id="predictionForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="alcohol">Alcohol:</label>
+                    <input type="number" id="alcohol" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="malic_acid">Malic Acid:</label>
+                    <input type="number" id="malic_acid" step="0.01" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ash">Ash:</label>
+                    <input type="number" id="ash" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="alkalinity">Alkalinity of Ash:</label>
+                    <input type="number" id="alkalinity" step="0.01" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="magnesium">Magnesium:</label>
+                    <input type="number" id="magnesium" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="phenols">Total Phenols:</label>
+                    <input type="number" id="phenols" step="0.01" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="flavanoids">Flavanoids:</label>
+                    <input type="number" id="flavanoids" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="nonflavanoid">Nonflavanoid Phenols:</label>
+                    <input type="number" id="nonflavanoid" step="0.01" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="proanthocyanins">Proanthocyanins:</label>
+                    <input type="number" id="proanthocyanins" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="color">Color Intensity:</label>
+                    <input type="number" id="color" step="0.01" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="hue">Hue:</label>
+                    <input type="number" id="hue" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="dilution">OD280/OD315:</label>
+                    <input type="number" id="dilution" step="0.01" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="proline">Proline:</label>
+                <input type="number" id="proline" step="0.01" required>
+            </div>
+            <button type="submit">Predict Cultivator</button>
+        </form>
+        <div id="result">
+            <p>Predicted Cultivator:</p>
+            <div class="prediction" id="prediction"></div>
+            <div class="confidence" id="confidence"></div>
+            <div class="probabilities">
+                <div class="prob-item">
+                    <span class="prob-label">Cultivator 1:</span>
+                    <div class="prob-bar"><div class="prob-fill" id="prob1"></div></div>
+                    <span class="prob-value" id="val1"></span>
+                </div>
+                <div class="prob-item">
+                    <span class="prob-label">Cultivator 2:</span>
+                    <div class="prob-bar"><div class="prob-fill" id="prob2"></div></div>
+                    <span class="prob-value" id="val2"></span>
+                </div>
+                <div class="prob-item">
+                    <span class="prob-label">Cultivator 3:</span>
+                    <div class="prob-bar"><div class="prob-fill" id="prob3"></div></div>
+                    <span class="prob-value" id="val3"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                alcohol: parseFloat(document.getElementById('alcohol').value),
+                malic_acid: parseFloat(document.getElementById('malic_acid').value),
+                ash: parseFloat(document.getElementById('ash').value),
+                alkalinity: parseFloat(document.getElementById('alkalinity').value),
+                magnesium: parseFloat(document.getElementById('magnesium').value),
+                phenols: parseFloat(document.getElementById('phenols').value),
+                flavanoids: parseFloat(document.getElementById('flavanoids').value),
+                nonflavanoid: parseFloat(document.getElementById('nonflavanoid').value),
+                proanthocyanins: parseFloat(document.getElementById('proanthocyanins').value),
+                color: parseFloat(document.getElementById('color').value),
+                hue: parseFloat(document.getElementById('hue').value),
+                dilution: parseFloat(document.getElementById('dilution').value),
+                proline: parseFloat(document.getElementById('proline').value)
+            };
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                
+                document.getElementById('prediction').textContent = 
+                    `Cultivator ${data.predicted_class}`;
+                document.getElementById('confidence').textContent = 
+                    `Confidence: ${(data.confidence * 100).toFixed(1)}%`;
+                
+                // Update probability bars
+                data.probabilities.forEach((prob, idx) => {
+                    document.getElementById(`prob${idx + 1}`).style.width = `${prob * 100}%`;
+                    document.getElementById(`val${idx + 1}`).textContent = `${(prob * 100).toFixed(1)}%`;
+                });
+                
+                document.getElementById('result').classList.add('show');
+            } catch (error) {
+                alert('Error making prediction. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>

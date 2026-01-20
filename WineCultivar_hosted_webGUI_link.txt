@@ -1,0 +1,6 @@
+Name: Stephanie Onwuagbaizu  
+Matric Number: 22CG031939
+Machine Learning Algorithm Used: Support Vector Machine (SVM)  
+Model Persistence Method: Joblib  
+Live URL: https://your-hosted-app-link  
+GitHub Repository: https://github.com/yourusername/WineCultivar_Project_Stephanie_YourMatricNo
